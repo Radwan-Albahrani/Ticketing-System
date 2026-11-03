@@ -1,0 +1,30 @@
+{
+  "name": "@loura/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun vite --host 0.0.0.0",
+    "build": "bun --bun vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@loura/contracts": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zustand": "^5.0.0",
+    "@tanstack/react-db": "1.0.0-rc.1.2",
+    "@tanstack/query-db-collection": "1.5.1",
+    "@tanstack/react-query": "5.101.0",
+    "@base-ui/react": "1.9.0",
+    "ai": "^7.0.106",
+    "@ai-sdk/react": "^4.0.109",
+    "lucide-react": "^0.545.0",
+    "motion": "^12.23.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.5",
+    "@vitejs/plugin-react": "^6.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@loura/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts src/worker.ts --target=bun --outdir=dist --packages=external",
+    "typecheck": "tsc --noEmit",
+    "start": "bun src/index.ts",
+    "worker": "bun src/worker.ts",
+    "migrate": "bun src/core/db/migrate.ts"
+  },
+  "dependencies": {
+    "@loura/contracts": "workspace:*",
+    "express": "^5.2.1",
+    "zod": "^4.5.2",
+    "drizzle-orm": "1.0.0-rc.5",
+    "better-auth": "1.6.23",
+    "evlog": "^2.24.0",
+    "bullmq": "5.69.1",
+    "ioredis": "5.9.2",
+    "pg": "^8.16.1",
+    "ai": "^7.0.106",
+    "@ai-sdk/provider": "^4.0.35",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/pg": "^8.15.4",
+    "drizzle-kit": "1.0.0-rc.5"
+  }
+}
