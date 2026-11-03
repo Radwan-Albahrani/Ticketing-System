@@ -1,25 +1,26 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-const enabled = process.env.INTEGRATION === '1';
-describe.skipIf(!enabled)('PostgreSQL lifecycle and isolation', () => {
+import { ensureDatabase } from '../setup/database';
+describe('PostgreSQL lifecycle and isolation', () => {
   // Dynamic imports let unit tests run without database configuration.
-  let infra: typeof import('../src/core/db');
-  let schema: typeof import('../src/core/db/schema');
-  let service: typeof import('../src/api/tickets/tickets.service');
-  let classifier: typeof import('../src/api/classification/classification.service');
-  const owner = `test-${crypto.randomUUID()}`;
-  const other = `test-${crypto.randomUUID()}`;
-  beforeAll(async () => {
-    infra = await import('../src/core/db'); schema = await import('../src/core/db/schema');
-    service = await import('../src/api/tickets/tickets.service');
-    classifier = await import('../src/api/classification/classification.service');
+  let infra: typeof import('../../src/core/db');
+  let schema: typeof import('../../src/core/db/schema');
+  let service: typeof import('../../src/api/tickets/tickets.service');
+  let classifier: typeof import('../../src/api/classification/classification.service');
+  let owner: string;
+  let other: string;
+  beforeEach(async () => {
+    await ensureDatabase();
+    owner = `test-${crypto.randomUUID()}`; other = `test-${crypto.randomUUID()}`;
+    infra = await import('../../src/core/db'); schema = await import('../../src/core/db/schema');
+    service = await import('../../src/api/tickets/tickets.service');
+    classifier = await import('../../src/api/classification/classification.service');
     await infra.db.insert(schema.user).values([owner, other].map((id) => ({ id, name: 'Test', email: `${id}@example.test`, emailVerified: false, createdAt: new Date(), updatedAt: new Date() })));
   });
-  afterAll(async () => {
+  afterEach(async () => {
     if (!infra) return;
     for (const id of [owner, other]) await infra.db.delete(schema.user).where(eq(schema.user.id, id));
-    await infra.pool.end();
   });
   test('concurrent duplicate requests create exactly one ticket, event and durable job', async () => {
     const input = { id: 'duplicate', subject: 'Charged twice', body: 'Two charges for one subscription.', scenario: 'normal' as const };
@@ -56,6 +57,9 @@ describe.skipIf(!enabled)('PostgreSQL lifecycle and isolation', () => {
     expect(recovered.events.some((event) => event.version === 1 && event.type === 'failed')).toBe(true);
   });
   test('same public id is isolated by account; filtering and pagination are stable', async () => {
+    await service.TicketsService.ingest(owner, { id: 'duplicate', subject: 'Invoice', body: 'Where is my invoice?', scenario: 'normal' });
+    await classifier.ClassificationService.process({ ownerId: owner, ticketId: 'duplicate', version: 1 });
+    await service.TicketsService.ingest(owner, { id: 'second', subject: 'Another', body: 'A request.', scenario: 'normal' });
     await expect(service.TicketsService.get(other, 'duplicate')).rejects.toThrow();
     await service.TicketsService.ingest(other, { id: 'duplicate', subject: 'Private', body: 'Other user content.', scenario: 'normal' });
     expect((await service.TicketsService.get(other, 'duplicate')).ticket.subject).toBe('Private');

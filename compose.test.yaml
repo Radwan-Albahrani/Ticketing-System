@@ -1,0 +1,23 @@
+name: loura-tests
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: loura
+      POSTGRES_PASSWORD: loura
+      POSTGRES_DB: loura_test
+    ports: ['127.0.0.1:5544:5432']
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U loura -d loura_test']
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine
+    ports: ['127.0.0.1:6399:6379']
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 1s
+      timeout: 3s
+      retries: 30

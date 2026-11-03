@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { generateText } from 'ai';
 import { classificationSchema, ingestSchema, listQuerySchema } from '@loura/contracts';
 import { sampleTickets } from '@loura/contracts/samples';
-import { classifyHeuristically, injectionSuspected, JevModel } from '../src/api/classification/utils/jev';
+import { classifyHeuristically, injectionSuspected, JevModel } from '../../src/api/classification/utils/jev';
 
 describe('model boundary', () => {
   test('all appendix tickets produce valid, plausible classifications', () => {
