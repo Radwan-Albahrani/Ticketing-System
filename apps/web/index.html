@@ -8,6 +8,18 @@
       name="description"
       content="Loura classification studio. Follow every ticket from arrival to a clear next step."
     />
+    <script>
+      try {
+        const preference = localStorage.getItem('loura-theme');
+        document.documentElement.dataset.theme =
+          preference === 'dark' ||
+          (preference !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+            ? 'dark'
+            : 'light';
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
     <title>Loura · Classification studio</title>
     <link
       rel="icon"

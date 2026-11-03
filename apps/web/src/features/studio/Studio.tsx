@@ -1,3 +1,4 @@
+import { ThemeMenu } from '../theme/ThemeMenu';
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -136,6 +137,7 @@ export function Studio() {
             <strong>Classification studio</strong>
           </div>
           <div className="topbar-right">
+            <ThemeMenu />
             <span className="local-badge">
               <span className="live-dot" /> Local demo
             </span>
@@ -157,7 +159,11 @@ export function Studio() {
               </h1>
               <p>From incoming questions to the right next step. See it all happen.</p>
             </div>
-            <button className="button primary" onClick={() => state.compose(true)}>
+            <button
+              id="new-ticket-trigger"
+              className="button primary"
+              onClick={() => state.compose(true)}
+            >
               <Plus size={16} />
               New ticket
             </button>

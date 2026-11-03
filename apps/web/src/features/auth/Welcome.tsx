@@ -1,3 +1,4 @@
+import { ThemeMenu } from '../theme/ThemeMenu';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowUpRight, ShieldCheck, Sparkles, Check } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -14,7 +15,10 @@ export function Welcome() {
     <main className="welcome">
       <div className="welcome-nav">
         <Logo />
-        <span className="eyebrow">THE SUPPORT WORKSPACE, REIMAGINED</span>
+        <div className="welcome-actions">
+          <span className="eyebrow">THE SUPPORT WORKSPACE, REIMAGINED</span>
+          <ThemeMenu />
+        </div>
       </div>
       <div className="welcome-grid">
         <motion.section

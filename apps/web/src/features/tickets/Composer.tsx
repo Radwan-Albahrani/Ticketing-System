@@ -22,6 +22,11 @@ export const scenarios: { value: DemoScenario; label: string; description: strin
     description: 'Invalid category and priority are rejected three times.',
   },
   {
+    value: 'invalid-summary',
+    label: 'Invalid summary, all attempts',
+    description: 'Valid JSON and valid labels, but a multi-line summary is rejected.',
+  },
+  {
     value: 'timeout',
     label: 'Model timeout',
     description: 'Each request exceeds its deadline and exhausts retries.',
@@ -69,7 +74,10 @@ export function Composer() {
     <Dialog.Root open={composerOpen} onOpenChange={compose}>
       <Dialog.Portal>
         <Dialog.Backdrop className="dialog-backdrop" />
-        <Dialog.Popup className="dialog-popup composer">
+        <Dialog.Popup
+          className="dialog-popup composer"
+          finalFocus={() => document.getElementById('new-ticket-trigger')}
+        >
           <div className="dialog-heading">
             <span className="eyebrow">START A CLASSIFICATION</span>
             <Dialog.Close className="icon-button" aria-label="Close new ticket">

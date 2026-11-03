@@ -1,3 +1,4 @@
+import { ThemeEffect } from './features/theme/ThemeMenu';
 import { Component, lazy, Suspense, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
@@ -74,6 +75,7 @@ function App() {
 }
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
+    <ThemeEffect />
     <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <App />

@@ -8,3 +8,5 @@
 - Use focused tests and browser verification. Never commit secrets or generated dependencies.
 - Commits must pass commitlint using Conventional Commits. No generated attribution or coauthor trailers.
 - Make small checkpoint commits after completing and validating each layer.
+
+- UI changes must support light/dark/system appearance, Base UI keyboard behavior, persisted theme choice, and reduced motion. Verify both themes in the browser.
