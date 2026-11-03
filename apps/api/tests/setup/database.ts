@@ -6,8 +6,14 @@ const composePath = resolve(import.meta.dir, '../../../../compose.test.yaml');
 export function ensureDatabase() {
   ready ??= (async () => {
     if (!process.env.TEST_DATABASE_URL) {
-      const process = Bun.spawn(['docker', 'compose', '-f', composePath, 'up', '-d', '--wait', '--quiet-pull'], { stdout: 'pipe', stderr: 'pipe' });
-      const [exitCode, stderr] = await Promise.all([process.exited, new Response(process.stderr).text()]);
+      const process = Bun.spawn(
+        ['docker', 'compose', '-f', composePath, 'up', '-d', '--wait', '--quiet-pull'],
+        { stdout: 'pipe', stderr: 'pipe' },
+      );
+      const [exitCode, stderr] = await Promise.all([
+        process.exited,
+        new Response(process.stderr).text(),
+      ]);
       if (exitCode) throw new Error(`Test Docker setup failed: ${stderr}`);
       started = true;
     }
@@ -20,7 +26,10 @@ export function ensureDatabase() {
 export async function cleanupDatabase() {
   await infrastructure?.pool.end();
   if (started) {
-    const process = Bun.spawn(['docker', 'compose', '-f', composePath, 'down', '-v'], { stdout: 'pipe', stderr: 'pipe' });
+    const process = Bun.spawn(['docker', 'compose', '-f', composePath, 'down', '-v'], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
     await process.exited;
   }
 }

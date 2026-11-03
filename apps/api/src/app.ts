@@ -13,18 +13,39 @@ export const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 app.use((req, res, next) => {
-  res.setHeader('x-request-id', crypto.randomUUID());
+  const requestId = crypto.randomUUID();
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('x-request-id', requestId);
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    if (req.headers.origin && req.headers.origin !== config.APP_URL) { next(new AppError(403, 'ORIGIN_REJECTED', 'Request origin is not allowed.')); return; }
-    if (!req.headers['content-type']?.startsWith('application/json')) { next(new AppError(415, 'JSON_REQUIRED', 'Use application/json.')); return; }
+    if (req.headers.origin && req.headers.origin !== config.APP_URL) {
+      next(new AppError(403, 'ORIGIN_REJECTED', 'Request origin is not allowed.'));
+      return;
+    }
+    if (!req.headers['content-type']?.startsWith('application/json')) {
+      next(new AppError(415, 'JSON_REQUIRED', 'Use application/json.'));
+      return;
+    }
   }
   next();
 });
 app.use(evlog());
-app.use('/api', rateLimit({ windowMs: 60000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: { code: 'RATE_LIMITED', message: 'Too many requests; try again shortly.' } } }));
+app.use(
+  '/api',
+  rateLimit({
+    windowMs: 60000,
+    limit: 300,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: { code: 'RATE_LIMITED', message: 'Too many requests; try again shortly.' } },
+  }),
+);
 app.get('/api/health', async (_req, res) => {
-  try { await pool.query('SELECT 1'); res.json({ status: 'ok' }); }
-  catch { res.status(503).json({ status: 'unavailable' }); }
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok' });
+  } catch {
+    res.status(503).json({ status: 'unavailable' });
+  }
 });
 app.all('/api/auth/{*path}', toNodeHandler(auth));
 app.use(express.json({ limit: '32kb' }));

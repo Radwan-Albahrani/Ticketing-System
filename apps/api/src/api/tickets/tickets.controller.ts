@@ -1,6 +1,13 @@
 import { createUIMessageStream, pipeUIMessageStreamToResponse } from 'ai';
 import type { Request, Response } from 'express';
-import { ingestSchema, listQuerySchema, reclassifySchema, ticketDetailSchema, ticketListSchema, ticketInputSchema } from '@loura/contracts';
+import {
+  ingestSchema,
+  listQuerySchema,
+  reclassifySchema,
+  ticketDetailSchema,
+  ticketListSchema,
+  ticketInputSchema,
+} from '@loura/contracts';
 import { TicketsService } from './tickets.service';
 export class TicketsController {
   static async create(req: Request, res: Response) {
@@ -9,7 +16,13 @@ export class TicketsController {
     req.log?.set({ action: 'ticket.ingest', ticketId: input.id, duplicate: result.duplicate });
     res.status(result.duplicate ? 200 : 202).json(result);
   }
-  static async list(req: Request, res: Response) { res.json(ticketListSchema.parse(await TicketsService.list(req.ownerId, listQuerySchema.parse(req.query)))); }
+  static async list(req: Request, res: Response) {
+    res.json(
+      ticketListSchema.parse(
+        await TicketsService.list(req.ownerId, listQuerySchema.parse(req.query)),
+      ),
+    );
+  }
   static async get(req: Request, res: Response) {
     const id = ticketInputSchema.shape.id.parse(req.params.id);
     res.json(ticketDetailSchema.parse(await TicketsService.get(req.ownerId, id)));
@@ -18,7 +31,9 @@ export class TicketsController {
     const id = ticketInputSchema.shape.id.parse(req.params.id);
     const initial = await TicketsService.get(req.ownerId, id);
     let closed = false;
-    res.on('close', () => { closed = true; });
+    res.on('close', () => {
+      closed = true;
+    });
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
         const seen = new Set<string>();
@@ -27,11 +42,17 @@ export class TicketsController {
         let snapshot = initial;
         const deadline = Date.now() + 60000;
         while (!closed && Date.now() < deadline) {
-          for (const event of snapshot.events.filter((event) => event.version === initial.ticket.version && !seen.has(event.id))) {
+          for (const event of snapshot.events.filter(
+            (event) => event.version === initial.ticket.version && !seen.has(event.id),
+          )) {
             seen.add(event.id);
             writer.write({ type: 'text-delta', id: textId, delta: event.message + '\n' });
           }
-          if (snapshot.ticket.status !== 'pending' || snapshot.ticket.version !== initial.ticket.version) break;
+          if (
+            snapshot.ticket.status !== 'pending' ||
+            snapshot.ticket.version !== initial.ticket.version
+          )
+            break;
           await new Promise((resolve) => setTimeout(resolve, 400));
           if (!closed) snapshot = await TicketsService.get(req.ownerId, id);
         }
@@ -44,6 +65,13 @@ export class TicketsController {
   static async reclassify(req: Request, res: Response) {
     const id = ticketInputSchema.shape.id.parse(req.params.id);
     const input = reclassifySchema.parse(req.body);
-    res.status(202).json({ ticket: await TicketsService.reclassify(req.ownerId, id, input.expectedVersion, input.scenario) });
+    res.status(202).json({
+      ticket: await TicketsService.reclassify(
+        req.ownerId,
+        id,
+        input.expectedVersion,
+        input.scenario,
+      ),
+    });
   }
 }
