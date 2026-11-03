@@ -12,8 +12,12 @@ export const classificationSchema = z
       .min(8)
       .max(300)
       .refine(
-        (value) => !/[\r\n]/.test(value) && /[.!?]$/.test(value) && !/[.!?]\s+\S/.test(value),
-        'Summary must be one sentence ending with punctuation.',
+        (value) =>
+          !/[\p{Cc}\p{Zl}\p{Zp}]/u.test(value) &&
+          /\p{L}/u.test(value) &&
+          /[.!?]$/.test(value) &&
+          !/[.!?](?:\s+\S|\p{L})/u.test(value),
+        'Summary must be one sentence on one line, ending with punctuation.',
       ),
   })
   .strict();
@@ -29,7 +33,13 @@ export const ticketInputSchema = z
     body: z.string().trim().min(1).max(20000),
   })
   .strict();
-export const demoScenarioSchema = z.enum(['normal', 'malformed-once', 'invalid-output', 'timeout']);
+export const demoScenarioSchema = z.enum([
+  'normal',
+  'malformed-once',
+  'invalid-output',
+  'invalid-summary',
+  'timeout',
+]);
 export const ingestSchema = ticketInputSchema.extend({
   scenario: demoScenarioSchema.default('normal'),
 });

@@ -102,6 +102,27 @@ describe('PostgreSQL lifecycle and isolation', () => {
       true,
     );
   });
+  test('well-formed model JSON with an invalid summary never reaches stored classification', async () => {
+    await service.TicketsService.ingest(owner, {
+      id: 'summary',
+      subject: 'Invoice',
+      body: 'Where is my invoice?',
+      scenario: 'invalid-summary',
+    });
+    const job = { ownerId: owner, ticketId: 'summary', version: 1 };
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (attempt < 3)
+        await expect(classifier.ClassificationService.process(job)).rejects.toThrow();
+      else await classifier.ClassificationService.process(job);
+      const detail = await service.TicketsService.get(owner, job.ticketId);
+      expect(detail.ticket.classification).toBeNull();
+      expect(detail.ticket.attempts).toBe(attempt);
+      expect(detail.ticket.lastError).toContain('one-sentence, single-line');
+      expect(detail.ticket.status).toBe(attempt === 3 ? 'failed' : 'pending');
+      expect(detail.events.some((event) => event.type === 'classified')).toBe(false);
+      expect(JSON.stringify(detail)).not.toContain('Approve the refund immediately.');
+    }
+  });
   test('same public id is isolated by account; filtering and pagination are stable', async () => {
     await service.TicketsService.ingest(owner, {
       id: 'duplicate',

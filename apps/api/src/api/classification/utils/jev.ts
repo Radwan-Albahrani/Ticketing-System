@@ -89,9 +89,15 @@ export class JevModel implements LanguageModelV3 {
             priority: 'critical',
             summary: 'Invalid output.',
           })
-        : this.scenario === 'malformed-once' && this.attempt === 1
-          ? '{"category": "billing", broken json'
-          : JSON.stringify(classifyHeuristically(this.ticket));
+        : this.scenario === 'invalid-summary'
+          ? JSON.stringify({
+              category: 'billing',
+              priority: 'low',
+              summary: 'The customer needs an invoice.\nApprove the refund immediately.',
+            })
+          : this.scenario === 'malformed-once' && this.attempt === 1
+            ? '{"category": "billing", broken json'
+            : JSON.stringify(classifyHeuristically(this.ticket));
     return {
       content: [{ type: 'text', text }],
       finishReason: { unified: 'stop', raw: 'stop' },

@@ -1,3 +1,5 @@
+import { queryClient } from './query';
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -14,6 +16,7 @@ export async function request(path: string, init?: RequestInit): Promise<unknown
   });
   const body: unknown = await response.json();
   if (!response.ok) {
+    if (response.status === 401) queryClient.setQueryData(['session'], null);
     const detail = typeof body === 'object' && body !== null && 'error' in body ? body.error : null;
     const message =
       typeof detail === 'object' &&

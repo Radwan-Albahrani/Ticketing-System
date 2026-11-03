@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { generateText } from 'ai';
 import { classificationSchema } from '@loura/contracts';
@@ -102,8 +103,10 @@ export class ClassificationService {
       const reason =
         error instanceof SyntaxError
           ? 'Model returned malformed JSON.'
-          : error instanceof Error && error.name === 'ZodError'
-            ? 'Model output failed the classification schema.'
+          : error instanceof ZodError
+            ? error.issues.some((issue) => issue.path[0] === 'summary')
+              ? 'Model summary failed the one-sentence, single-line, 8-300 character contract.'
+              : 'Model output failed the classification schema.'
             : 'Model request failed or exceeded its deadline.';
       const terminal = attempt >= MAX_ATTEMPTS;
       await db.transaction(async (tx) => {

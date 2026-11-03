@@ -52,6 +52,42 @@ describe('model boundary', () => {
     ])
       expect(classificationSchema.safeParse(bad).success).toBe(false);
   });
+  test('requires a single summary sentence and line, including Unicode boundaries', () => {
+    const result = {
+      category: 'billing',
+      priority: 'low',
+      summary: 'The customer was charged 49.00 twice.',
+    };
+    expect(classificationSchema.safeParse(result).success).toBe(true);
+    for (const summary of [
+      'First sentence. Second sentence.',
+      'First sentence.Second sentence.',
+      'First line\nSecond line.',
+      'First line\rSecond line.',
+      'First line\u2028Second line.',
+      'First line\u2029Second line.',
+      'First line\u0085Second line.',
+      'First\tsecond line.',
+      '........',
+      'Missing terminal punctuation',
+      'x'.repeat(301) + '.',
+    ])
+      expect(classificationSchema.safeParse({ ...result, summary }).success).toBe(false);
+  });
+  test('valid model JSON and labels do not make an invalid summary acceptable', async () => {
+    const response = await generateText({
+      model: new JevModel(sampleTickets[0]!, 'invalid-summary', 1, 0),
+      prompt: 'Classify.',
+      maxRetries: 0,
+    });
+    const raw = JSON.parse(response.text);
+    expect(raw.category).toBe('billing');
+    expect(raw.priority).toBe('low');
+    const parsed = classificationSchema.safeParse(raw);
+    expect(parsed.success).toBe(false);
+    if (!parsed.success)
+      expect(parsed.error.issues.map((issue) => issue.path.join('.'))).toEqual(['summary']);
+  });
   test('AI SDK fake sometimes returns broken text and then recovers', async () => {
     const request = (attempt: number) =>
       generateText({
