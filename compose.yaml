@@ -1,0 +1,72 @@
+name: loura
+x-api: &api
+  build:
+    context: .
+    target: api
+  environment: &environment
+    DATABASE_URL: postgres://loura:loura@postgres:5432/loura
+    REDIS_URL: redis://redis:6379
+    AUTH_SECRET: ${AUTH_SECRET:-local-demo-secret-change-before-any-public-deployment}
+    APP_URL: ${APP_URL:-http://localhost:8080}
+    PORT: 3001
+    WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-3}
+    MODEL_DELAY_MS: ${MODEL_DELAY_MS:-1200}
+    MODEL_TIMEOUT_MS: ${MODEL_TIMEOUT_MS:-5000}
+  init: true
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: loura
+      POSTGRES_PASSWORD: loura
+      POSTGRES_DB: loura
+    ports: ['127.0.0.1:5433:5432']
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U loura -d loura']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine
+    command: [redis-server, --appendonly, 'yes', --appendfsync, everysec, --maxmemory-policy, noeviction]
+    ports: ['127.0.0.1:6380:6379']
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    <<: *api
+    command: [sh, -c, 'bun apps/api/src/core/db/migrate.ts && bun apps/api/src/core/db/seed.ts']
+    depends_on:
+      postgres: { condition: service_healthy }
+  api:
+    <<: *api
+    restart: unless-stopped
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: [CMD, bun, -e, 'const r=await fetch("http://localhost:3001/api/health");process.exit(r.ok?0:1)']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  worker:
+    <<: *api
+    command: [bun, apps/api/src/worker.ts]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+  web:
+    build:
+      context: .
+      target: web
+    ports: ['127.0.0.1:8080:8080']
+    depends_on:
+      api: { condition: service_healthy }
+volumes:
+  postgres-data:
+  redis-data:
