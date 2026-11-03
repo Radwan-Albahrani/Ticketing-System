@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-// A source zip can run without Git. Only configure hooks for this repository.
+// Only configure hooks when this project owns the repository.
 const projectRoot = resolve(import.meta.dir, '..');
 if (Bun.which('git')) {
   const probe = Bun.spawnSync(['git', 'rev-parse', '--show-toplevel'], {

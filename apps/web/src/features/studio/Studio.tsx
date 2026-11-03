@@ -31,15 +31,16 @@ import { post } from '../../core/api';
 import { queryClient } from '../../core/query';
 export function Studio() {
   const state = useStudio();
+  const { notice, notify } = state;
   const query = useTickets();
   const load = useLoadSamples();
   const counts = query.data?.counts ?? { total: 0, classified: 0, pending: 0, failed: 0 };
   useEffect(() => {
-    if (state.notice) {
-      const timer = setTimeout(() => state.notify(null), 6500);
+    if (notice) {
+      const timer = setTimeout(() => notify(null), 6500);
       return () => clearTimeout(timer);
     }
-  }, [state.notice, state.notify]);
+  }, [notice, notify]);
   return (
     <div className={`app-shell ${state.selectedId ? 'has-selection' : ''}`}>
       <aside className="sidebar">

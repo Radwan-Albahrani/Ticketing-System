@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+export const SETUP_TIMEOUT_MS = 120_000;
 let ready: Promise<void> | undefined;
 let started = false;
 let infrastructure: typeof import('../../src/core/db') | undefined;
@@ -6,8 +7,20 @@ const composePath = resolve(import.meta.dir, '../../../../compose.test.yaml');
 export function ensureDatabase() {
   ready ??= (async () => {
     if (!process.env.TEST_DATABASE_URL) {
+      started = true;
       const process = Bun.spawn(
-        ['docker', 'compose', '-f', composePath, 'up', '-d', '--wait', '--quiet-pull'],
+        [
+          'docker',
+          'compose',
+          '-f',
+          composePath,
+          'up',
+          '-d',
+          '--wait',
+          '--quiet-pull',
+          '--wait-timeout',
+          '90',
+        ],
         { stdout: 'pipe', stderr: 'pipe' },
       );
       const [exitCode, stderr] = await Promise.all([
@@ -15,7 +28,6 @@ export function ensureDatabase() {
         new Response(process.stderr).text(),
       ]);
       if (exitCode) throw new Error(`Test Docker setup failed: ${stderr}`);
-      started = true;
     }
     infrastructure = await import('../../src/core/db');
     const { migrate } = await import('../../src/core/db/migrate');

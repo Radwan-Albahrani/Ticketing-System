@@ -1,2 +1,6 @@
 [test]
 preload = ["./apps/api/tests/setup/preload.ts"]
+
+[fmt]
+printWidth = 100
+singleQuote = true

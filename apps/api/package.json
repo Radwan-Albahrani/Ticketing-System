@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts src/worker.ts --target=bun --outdir=dist --packages=external",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check --no-script",
     "start": "bun src/index.ts",
     "worker": "bun src/worker.ts",
     "migrate": "bun src/core/db/migrate.ts"

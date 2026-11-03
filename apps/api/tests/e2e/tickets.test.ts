@@ -1,3 +1,4 @@
+import { SETUP_TIMEOUT_MS } from '../setup/database';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { ticketDetailSchema, ticketListSchema } from '@loura/contracts';
@@ -9,18 +10,18 @@ describe('real HTTP, better-auth and PostgreSQL', () => {
   let actor: Awaited<ReturnType<typeof createActor>>;
   beforeAll(async () => {
     server = await startTestServer();
-  });
+  }, SETUP_TIMEOUT_MS);
   beforeEach(async () => {
     actor = await createActor(server);
-  });
+  }, SETUP_TIMEOUT_MS);
   afterEach(async () => {
     const { db } = await import('../../src/core/db');
     const { user } = await import('../../src/core/db/schema');
     if (actor) await db.delete(user).where(eq(user.id, actor.id));
-  });
+  }, 30_000);
   afterAll(async () => {
     await server?.close();
-  });
+  }, 30_000);
   test('signs in, reads the session and signs out through HTTP', async () => {
     const signedIn = await server.call('/auth/sign-in/email', {
       method: 'POST',
@@ -147,9 +148,8 @@ describe('real HTTP, better-auth and PostgreSQL', () => {
   });
   test('streams only saved activity through the AI SDK UI protocol', async () => {
     const { TicketsService } = await import('../../src/api/tickets/tickets.service');
-    const { ClassificationService } = await import(
-      '../../src/api/classification/classification.service'
-    );
+    const { ClassificationService } =
+      await import('../../src/api/classification/classification.service');
     await TicketsService.ingest(actor.id, { ...sampleTickets[4]!, scenario: 'normal' });
     await ClassificationService.process({ ownerId: actor.id, ticketId: 't-1005', version: 1 });
     const response = await server.call('/tickets/t-1005/activity', {

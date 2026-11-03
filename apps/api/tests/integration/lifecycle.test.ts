@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-import { ensureDatabase } from '../setup/database';
+import { ensureDatabase, SETUP_TIMEOUT_MS } from '../setup/database';
 describe('PostgreSQL lifecycle and isolation', () => {
   // Dynamic imports let unit tests run without database configuration.
   let infra: typeof import('../../src/core/db');
@@ -28,12 +28,12 @@ describe('PostgreSQL lifecycle and isolation', () => {
         updatedAt: new Date(),
       })),
     );
-  });
+  }, SETUP_TIMEOUT_MS);
   afterEach(async () => {
     if (!infra) return;
     for (const id of [owner, other])
       await infra.db.delete(schema.user).where(eq(schema.user.id, id));
-  });
+  }, 30_000);
   test('concurrent duplicate requests create exactly one ticket, event and durable job', async () => {
     const input = {
       id: 'duplicate',

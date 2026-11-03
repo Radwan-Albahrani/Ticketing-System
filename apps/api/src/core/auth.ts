@@ -17,7 +17,6 @@ export const auth = betterAuth({
 });
 declare global {
   // Express exposes its request extension through this global namespace.
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       ownerId: string;

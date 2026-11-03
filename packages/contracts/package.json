@@ -8,8 +8,8 @@
     "./samples": "./src/samples.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "build": "bun check --no-script",
+    "typecheck": "bun check --no-script"
   },
   "dependencies": {
     "zod": "^4.5.2"

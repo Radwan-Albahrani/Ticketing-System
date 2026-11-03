@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { resolve } from 'node:path';
-import { ensureDatabase } from '../setup/database';
+import { ensureDatabase, SETUP_TIMEOUT_MS } from '../setup/database';
 import type { TicketsService as Service } from '../../src/api/tickets/tickets.service';
 import type { TicketDetail } from '@loura/contracts';
 
@@ -18,7 +18,7 @@ describe('BullMQ worker and outbox recovery', () => {
     schema = await import('../../src/core/db/schema');
     service = (await import('../../src/api/tickets/tickets.service')).TicketsService;
     queue = await import('../../src/core/queue');
-  });
+  }, SETUP_TIMEOUT_MS);
   beforeEach(async () => {
     owner = `worker-${crypto.randomUUID()}`;
     await infra.db.insert(schema.user).values({
@@ -29,7 +29,7 @@ describe('BullMQ worker and outbox recovery', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-  });
+  }, SETUP_TIMEOUT_MS);
   async function stop() {
     if (worker && worker.exitCode === null) {
       worker.kill('SIGTERM');
@@ -47,12 +47,12 @@ describe('BullMQ worker and outbox recovery', () => {
   afterEach(async () => {
     await stop();
     if (owner) await infra.db.delete(schema.user).where(eq(schema.user.id, owner));
-  });
+  }, 30_000);
   afterAll(async () => {
     await stop();
     await queue?.classificationQueue.close();
     await queue?.redis.quit();
-  });
+  }, 30_000);
   async function waitFor(id: string, predicate: (detail: TicketDetail) => boolean) {
     const deadline = Date.now() + 15000;
     while (Date.now() < deadline) {

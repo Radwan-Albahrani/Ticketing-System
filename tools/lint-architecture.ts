@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, relative, resolve, dirname } from 'node:path';
-import ts from 'typescript';
+import { parseSync } from 'oxc-parser';
 
 const root = resolve(import.meta.dir, '../apps/api/src');
 const failures: string[] = [];
@@ -38,19 +38,32 @@ function walk(dir: string): void {
       ).test(entry.name)
     )
       failures.push(`${file}: move helpers into utils/`);
-    const source = ts.createSourceFile(
-      file,
-      readFileSync(path, 'utf8'),
-      ts.ScriptTarget.Latest,
-      true,
-    );
-    function visit(node: ts.Node): void {
+    const parsed = parseSync(file, readFileSync(path, 'utf8'));
+    if (parsed.errors.length) {
+      failures.push(`${file}: cannot validate architecture because parsing failed`);
+      continue;
+    }
+    function visit(node: unknown): void {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      const record = node as Record<string, unknown>;
+      const source = record.source;
       if (
-        (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
-        node.moduleSpecifier &&
-        ts.isStringLiteral(node.moduleSpecifier)
+        [
+          'ImportDeclaration',
+          'ExportNamedDeclaration',
+          'ExportAllDeclaration',
+          'ImportExpression',
+        ].includes(String(record.type)) &&
+        source &&
+        typeof source === 'object' &&
+        'value' in source &&
+        typeof source.value === 'string'
       ) {
-        const specifier = node.moduleSpecifier.text;
+        const specifier = source.value;
         const target = specifier.startsWith('.')
           ? relative(root, resolve(dirname(path), specifier)) +
             (specifier.endsWith('.ts') ? '' : '.ts')
@@ -58,9 +71,9 @@ function walk(dir: string): void {
         const error = inspectImport(file, target);
         if (error) failures.push(`${file}: ${error} (${specifier})`);
       }
-      ts.forEachChild(node, visit);
+      Object.values(record).forEach(visit);
     }
-    visit(source);
+    visit(parsed.program);
   }
 }
 if (import.meta.main) {

@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "react-hooks", "import"],
+  "categories": { "correctness": "error" },
+  "ignorePatterns": ["**/node_modules/**", "**/dist/**", ".turbo/**", "artifacts/**"],
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/api/*/*.controller", "**/api/*/*.router"],
+            "message": "Feature entry points belong in routers and application composition only."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    { "files": ["**/*.router.ts", "**/app.ts"], "rules": { "no-restricted-imports": "off" } },
+    { "files": ["**/core/auth.ts"], "rules": { "typescript/no-namespace": "off" } }
+  ]
+}

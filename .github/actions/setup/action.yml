@@ -1,0 +1,10 @@
+name: Setup Bun
+description: Install the pinned runtime and locked workspace dependencies
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.4.4
+    - run: bun install --frozen-lockfile
+      shell: bash
