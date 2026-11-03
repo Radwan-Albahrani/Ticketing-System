@@ -12,9 +12,9 @@
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "lint": "eslint . && bun tools/lint-architecture.ts",
-    "test": "bun test apps/api/tests tools",
+    "test": "bun test",
     "commitlint": "commitlint",
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "bun tools/install-hooks.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
